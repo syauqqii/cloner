@@ -21,6 +21,10 @@ FOLDER_VIDEO = "video"
         FILE YANG TERDAPAT '=' MAKA TIDAK DI SIMPAN.
 """
 KEYWORDS = ['=']
+
+# LINE: 67 (START - END)
+CUSTOM_OPERATION = False # True / False, DEFAULT: False
+EXCEPTION_EXTENSION = ['.blablabla'] # Change blablabla to bebas terserah kamuh
 #   ======= END - CONFIGURATION =======
 
 def is_valid_url(url):
@@ -43,7 +47,7 @@ def clean_filename(url):
     return cleaned_filename
 
 def save_files(folder, files):
-    global SKIP, BERHASIL, GAGAL, KEYWORDS
+    global SKIP, BERHASIL, GAGAL, KEYWORDS, EXCEPTION_EXTENSION
 
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -59,7 +63,15 @@ def save_files(folder, files):
         if response.status_code == 200:
             file_content = response.content
             cleaned_filename = clean_filename(file_url)
+
+            # === START CUSTOM OPERATION ===
+            if CUSTOM_OPERATION:
+                if cleaned_filename.endswith(tuple(EXCEPTION_EXTENSION)):
+                    cleaned_filename = ' '.join(cleaned_filename.split('_')[1:])
+            #  === END CUSTOM OPERATION ===
+
             file_path = os.path.join(folder, cleaned_filename)
+
             if os.path.exists(file_path):
                 print(f' > SKIP : {file_path} => SUDAH ADA')
                 SKIP += 1
@@ -95,8 +107,8 @@ def main():
         html = resp.text
         soup = BeautifulSoup(html, 'html.parser')
 
-        with open(f'{URL.split('//')[1].split('/')[0]}.html', 'w', encoding='utf-8') as file:
-            file.write(html)
+        with open(f'index.html', 'w', encoding='utf-8') as file:
+            file.write(soup.prettify())
 
         # GET audioh
         audio_files = [urljoin(URL, audio['src']) for audio in soup.find_all('audio', {'src': True})]
